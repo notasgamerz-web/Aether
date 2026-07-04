@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AETHER — The Future of Shopping</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================= TOKENS ============================= */
+:root{
+  --void:#050509;
+  --charcoal:#0c0c14;
+  --charcoal-2:#111118;
+  --glass-bg: rgba(255,255,255,0.045);
+  --glass-bg-strong: rgba(255,255,255,0.08);
+  --glass-border: rgba(255,255,255,0.09);
+  --glass-border-strong: rgba(255,255,255,0.18);
+  --blue:#5b7fff;
+  --blue-soft:#8ea2ff;
+  --purple:#b24bff;
+  --purple-soft:#d19bff;
+  --grad: linear-gradient(135deg, var(--blue), var(--purple));
+  --text:#f2f3f7;
+  --text-dim:#9aa0b4;
+  --text-faint:#5c6178;
+  --success:#4ade80;
+  --font-display:'Space Grotesk', sans-serif;
+  --font-body:'Inter', sans-serif;
+  --font-mono:'JetBrains Mono', monospace;
+  --ease: cubic-bezier(.16,.84,.44,1);
+  --ease-soft: cubic-bezier(.22,.61,.36,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{background:var(--void);}
+html,body{width:100%;overflow-x:hidden;}
+body{
+  background:var(--void);
+  color:var(--text);
+  font-family:var(--font-body);
+  font-weight:400;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+  cursor:none;
+}
+::selection{background:var(--purple);color:#fff;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;border:none;background:none;color:inherit;cursor:none;}
+ul{list-style:none;}
+input{font-family:inherit;color:var(--text);}
+@media (max-width:900px){ body{cursor:auto;} button{cursor:pointer;} }
+
+/* subtle ambient grain + gradient backdrop for whole page */
+body::before{
+  content:'';
+  position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(1200px 700px at 15% -10%, rgba(91,127,255,0.10), transparent 60%),
+    radial-gradient(1000px 800px at 90% 10%, rgba(178,75,255,0.09), transparent 60%),
+    radial-gradient(900px 700px at 50% 100%, rgba(91,127,255,0.06), transparent 60%);
+}
+.noise{
+  position:fixed; inset:0; z-index:1; pointer-events:none; opacity:.035; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ============================= CURSOR ============================= */
+.cursor-dot,.cursor-ring{position:fixed; top:0; left:0; pointer-events:none; z-index:9999; border-radius:50%; transform:translate(-50%,-50%);}
+.cursor-dot{width:6px;height:6px;background:#fff;}
+.cursor-ring{width:34px;height:34px;border:1px solid rgba(255,255,255,0.4); transition:width .25s var(--ease), height .25s var(--ease), border-color .25s, background .25s;}
+.cursor-ring.hover{width:64px;height:64px;border-color:transparent;background:rgba(255,255,255,0.08);backdrop-filter:blur(2px);}
+.cursor-ring.click{width:28px;height:28px;}
+@media (max-width:900px){.cursor-dot,.cursor-ring{display:none;}}
+
+/* ============================= PRELOADER ============================= */
+#preloader{
+  position:fixed;inset:0;z-index:10000;background:var(--void);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;
+  transition:opacity .9s var(--ease), visibility .9s;
+}
+#preloader.done{opacity:0;visibility:hidden;}
+.pre-mark{width:64px;height:64px;position:relative;}
+.pre-mark svg{width:100%;height:100%;}
+.pre-mark circle{fill:none;stroke-width:1.4;}
+.pre-mark .ring1{stroke:var(--blue);stroke-dasharray:180;stroke-dashoffset:180;animation:draw 1.6s var(--ease) forwards;}
+.pre-mark .ring2{stroke:var(--purple);stroke-dasharray:130;stroke-dashoffset:130;animation:draw 1.6s var(--ease) .2s forwards;}
+@keyframes draw{to{stroke-dashoffset:0;}}
+.pre-bar{width:220px;height:1px;background:rgba(255,255,255,0.08);position:relative;overflow:hidden;}
+.pre-bar span{position:absolute;left:0;top:0;bottom:0;width:0%;background:var(--grad);}
+.pre-label{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;color:var(--text-faint);text-transform:uppercase;}
+
+/* ============================= NAVBAR ============================= */
+.navbar{
+  position:fixed; top:18px; left:50%; transform:translateX(-50%); z-index:500;
+  width:min(1180px, 94vw);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 22px; border-radius:999px;
+  background:rgba(12,12,20,0.35);
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(0px);
+  transition:background .5s var(--ease-soft), backdrop-filter .5s var(--ease-soft), padding .4s var(--ease-soft), border-color .4s;
+}
+.navbar.scrolled{background:rgba(10,10,16,0.62); backdrop-filter:blur(18px); border-color:var(--glass-border-strong); padding:10px 20px;}
+.nav-logo{font-family:var(--font-display);font-weight:600;font-size:18px;letter-spacing:.03em;display:flex;align-items:center;gap:8px;}
+.nav-logo .dot{width:7px;height:7px;border-radius:50%;background:var(--grad);box-shadow:0 0 12px var(--blue);}
+.nav-links{display:flex;gap:6px;}
+.nav-links a{
+  position:relative; padding:8px 16px; font-size:13.5px; color:var(--text-dim); font-weight:500;
+  transition:color .3s;
+}
+.nav-links a::after{
+  content:'';position:absolute;left:16px;right:16px;bottom:4px;height:1px;background:var(--grad);
+  transform:scaleX(0); transform-origin:left; transition:transform .4s var(--ease);
+}
+.nav-links a:hover{color:var(--text);}
+.nav-links a:hover::after{transform:scaleX(1);}
+.nav-actions{display:flex;align-items:center;gap:6px;}
+.icon-btn{position:relative; width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--text-dim);transition:color .3s, background .3s;}
+.icon-btn:hover{color:var(--text);background:rgba(255,255,255,0.06);}
+.icon-btn svg{width:17px;height:17px;}
+.badge{
+  position:absolute; top:2px; right:2px; min-width:15px; height:15px; padding:0 3px; border-radius:50%;
+  background:var(--grad); color:#fff; font-size:9px; font-weight:600; display:flex; align-items:center; justify-content:center;
+  font-family:var(--font-mono); transform:scale(0); transition:transform .3s var(--ease);
+}
+.badge.show{transform:scale(1);}
+.nav-cta{
+  margin-left:6px; padding:9px 20px; border-radius:999px; font-size:13px; font-weight:600;
+  background:var(--grad); color:#fff; letter-spacing:.01em;
+}
+@media (max-width:860px){ .nav-links{display:none;} }
+
+/* ============================= GLASS BUTTONS ============================= */
+.btn{
+  position:relative; overflow:hidden; display:inline-flex; align-items:center; gap:10px;
+  padding:16px 30px; border-radius:999px; font-size:14.5px; font-weight:600; letter-spacing:.01em;
+  isolation:isolate;
+}
+.btn-glass{
+  background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.16); color:#fff;
+  backdrop-filter:blur(10px);
+}
+.btn-glass::before{
+  content:''; position:absolute; inset:0; z-index:-1; background:var(--grad); opacity:0; transition:opacity .5s var(--ease);
+}
+.btn-glass:hover::before{opacity:.18;}
+.btn-glass:hover{border-color:rgba(255,255,255,0.35);}
+.btn-solid{background:var(--grad); color:#fff; border:1px solid transparent;}
+.btn-solid span{position:relative;z-index:2;}
+.btn-outline{background:transparent;border:1px solid rgba(255,255,255,0.18);color:var(--text);}
+.ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,0.5);transform:scale(0);animation:rip .7s ease-out forwards;pointer-events:none;}
+@keyframes rip{to{transform:scale(3);opacity:0;}}
+
+/* ============================= HERO ============================= */
+#hero{position:relative;height:100vh;min-height:640px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden;}
+#hero-canvas{position:absolute;inset:0;z-index:0;}
+.hero-glow{position:absolute;border-radius:50%;filter:blur(90px);pointer-events:none;opacity:.55;z-index:0;}
+.glow-a{width:520px;height:520px;background:radial-gradient(circle, rgba(91,127,255,0.55), transparent 70%);top:-10%;left:-8%;}
+.glow-b{width:560px;height:560px;background:radial-gradient(circle, rgba(178,75,255,0.5), transparent 70%);bottom:-15%;right:-10%;}
+.hero-content{position:relative;z-index:2;text-align:center;padding:0 20px;display:flex;flex-direction:column;align-items:center;}
+.eyebrow{
+  font-family:var(--font-mono); font-size:11.5px; letter-spacing:.28em; text-transform:uppercase; color:var(--text-dim);
+  display:flex; align-items:center; gap:10px; margin-bottom:26px; opacity:0;
+}
+.eyebrow .line{width:28px;height:1px;background:var(--text-faint);}
+h1.hero-title{
+  font-family:var(--font-display); font-weight:600; letter-spacing:-0.02em;
+  font-size:clamp(2.6rem, 8vw, 6.6rem); line-height:1.02;
+}
+h1.hero-title .line-wrap{overflow:hidden; display:block;}
+h1.hero-title .word{display:inline-block; transform:translateY(110%); will-change:transform;}
+h1.hero-title .grad-text{background:var(--grad); -webkit-background-clip:text; background-clip:text; color:transparent;}
+.hero-sub{
+  margin-top:26px; max-width:520px; color:var(--text-dim); font-size:16px; font-weight:300; opacity:0; transform:translateY(16px);
+}
+.hero-ctas{display:flex; gap:16px; margin-top:44px; flex-wrap:wrap; justify-content:center; opacity:0; transform:translateY(16px);}
+.scroll-cue{position:absolute; bottom:34px; left:50%; transform:translateX(-50%); z-index:2; display:flex; flex-direction:column; align-items:center; gap:10px; opacity:0;}
+.scroll-cue .mouse{width:22px;height:36px;border:1px solid rgba(255,255,255,0.3);border-radius:12px;position:relative;}
+.scroll-cue .mouse span{position:absolute;top:6px;left:50%;transform:translateX(-50%);width:3px;height:7px;background:var(--blue-soft);border-radius:2px;animation:scrolldot 1.8s ease infinite;}
+@keyframes scrolldot{0%{opacity:1;top:6px;}70%{opacity:0;top:18px;}100%{opacity:0;top:6px;}}
+.scroll-cue small{font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;color:var(--text-faint);}
+
+/* ============================= MARQUEE ============================= */
+.marquee-wrap{position:relative;z-index:2;border-top:1px solid var(--glass-border);border-bottom:1px solid var(--glass-border);padding:18px 0;overflow:hidden;background:rgba(255,255,255,0.015);}
+.marquee-track{display:flex;width:max-content;animation:scrollx 26s linear infinite;}
+.marquee-track span{font-family:var(--font-display);font-size:15px;letter-spacing:.08em;color:var(--text-faint);padding:0 28px;display:flex;align-items:center;gap:28px;white-space:nowrap;text-transform:uppercase;}
+.marquee-track span i{width:5px;height:5px;border-radius:50%;background:var(--purple);display:inline-block;}
+@keyframes scrollx{to{transform:translateX(-50%);}}
+
+/* ============================= SECTIONS ============================= */
+section{position:relative;z-index:2;padding:130px 24px;}
+.section-inner{max-width:1240px;margin:0 auto;}
+.section-head{display:flex;justify-content:space-between;align-items:flex-end;gap:30px;margin-bottom:60px;flex-wrap:wrap;}
+.section-head h2{font-family:var(--font-display);font-weight:600;font-size:clamp(1.9rem,4vw,3.2rem);letter-spacing:-0.01em;max-width:600px;}
+.section-head p{color:var(--text-dim);max-width:340px;font-size:14.5px;font-weight:300;}
+.eyebrow-sm{font-family:var(--font-mono);font-size:11px;letter-spacing:.24em;color:var(--purple-soft);text-transform:uppercase;margin-bottom:14px;display:block;}
+
+/* ============================= PRODUCT GRID ============================= */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;}
+@media (max-width:980px){.grid{grid-template-columns:repeat(2,1fr);}}
+@media (max-width:620px){.grid{grid-template-columns:1fr;}}
+.card{
+  position:relative; border-radius:22px; padding:1px; background:linear-gradient(160deg, rgba(255,255,255,0.14), rgba(255,255,255,0.02));
+  perspective:900px;
+}
+.card-inner{
+  position:relative; border-radius:21px; background:linear-gradient(160deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+  overflow:hidden; padding:22px; height:100%; transform-style:preserve-3d;
+  transition:transform .1s linear;
+  border:1px solid rgba(255,255,255,0.06);
+}
+.card:nth-child(2){transform:translateY(26px);}
+.card:nth-child(5){transform:translateY(26px);}
+.card-visual{
+  height:220px; border-radius:16px; position:relative; overflow:hidden; margin-bottom:20px;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 30% 20%, rgba(255,255,255,0.06), transparent 60%), var(--charcoal-2);
+}
+.card-visual canvas{width:100%!important;height:100%!important;}
+.card-tag{position:absolute;top:12px;left:12px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);background:rgba(0,0,0,0.4);padding:4px 9px;border-radius:20px;border:1px solid rgba(255,255,255,0.08);z-index:3;}
+.wish-btn{position:absolute;top:10px;right:10px;z-index:4;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,0.4);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.1);transition:background .3s;}
+.wish-btn svg{width:15px;height:15px;stroke:#fff;fill:none;transition:fill .3s,stroke .3s;}
+.wish-btn.active svg{fill:var(--purple);stroke:var(--purple);}
+.card-title{font-family:var(--font-display);font-size:18px;font-weight:600;margin-bottom:4px;}
+.card-desc{font-size:12.5px;color:var(--text-dim);margin-bottom:16px;font-weight:300;}
+.card-foot{display:flex;align-items:center;justify-content:space-between;}
+.card-price{font-family:var(--font-mono);font-size:15px;color:var(--text);}
+.card-price small{color:var(--text-faint);font-size:11px;}
+.qv-btn{
+  font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:9px 15px;border-radius:999px;
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--text);
+  display:flex;align-items:center;gap:6px;transition:background .3s,border-color .3s;
+}
+.qv-btn:hover{background:var(--grad);border-color:transparent;}
+.card-glow{position:absolute;inset:-2px;border-radius:22px;opacity:0;pointer-events:none;transition:opacity .4s;background:radial-gradient(400px circle at var(--mx,50%) var(--my,50%), rgba(91,127,255,0.25), transparent 60%);}
+.card:hover .card-glow{opacity:1;}
+
+/* ============================= SPOTLIGHT ============================= */
+.spotlight{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center;}
+@media (max-width:900px){.spotlight{grid-template-columns:1fr;gap:40px;}}
+.spot-visual{
+  position:relative; aspect-ratio:1/1; border-radius:28px; background:radial-gradient(circle at 35% 25%, rgba(255,255,255,0.07), transparent 55%), var(--charcoal-2);
+  border:1px solid var(--glass-border); overflow:hidden; cursor:grab;
+}
+.spot-visual:active{cursor:grabbing;}
+.spot-visual canvas{width:100%!important;height:100%!important;}
+.spot-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);font-family:var(--font-mono);font-size:10px;letter-spacing:.15em;color:var(--text-faint);text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+.variant-row{display:flex;gap:10px;margin:26px 0 8px;}
+.variant{width:30px;height:30px;border-radius:50%;border:2px solid transparent;cursor:pointer;position:relative;transition:transform .3s var(--ease);}
+.variant.active{border-color:#fff;transform:scale(1.12);}
+.spot-title{font-family:var(--font-display);font-size:clamp(1.8rem,3.4vw,2.7rem);font-weight:600;letter-spacing:-0.01em;margin-bottom:14px;}
+.spot-desc{color:var(--text-dim);font-weight:300;font-size:15px;max-width:460px;margin-bottom:26px;}
+.stars{display:flex;gap:3px;color:#facc15;margin-bottom:8px;}
+.stars svg{width:14px;height:14px;fill:#facc15;}
+.review-line{font-size:12.5px;color:var(--text-dim);margin-bottom:26px;}
+.spec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:34px;}
+.spec{border-top:1px solid var(--glass-border);padding-top:12px;}
+.spec b{display:block;font-family:var(--font-display);font-size:22px;}
+.spec span{font-size:11px;color:var(--text-faint);letter-spacing:.05em;text-transform:uppercase;}
+.spot-price-row{display:flex;align-items:center;gap:22px;flex-wrap:wrap;}
+.spot-price{font-family:var(--font-mono);font-size:24px;}
+
+/* ============================= NEWSLETTER ============================= */
+.news-panel{
+  border-radius:28px; border:1px solid var(--glass-border); background:linear-gradient(135deg, rgba(91,127,255,0.08), rgba(178,75,255,0.08));
+  padding:70px 40px; text-align:center; position:relative; overflow:hidden;
+}
+.news-panel h2{font-family:var(--font-display);font-size:clamp(1.7rem,3.6vw,2.6rem);font-weight:600;margin-bottom:14px;}
+.news-panel p{color:var(--text-dim);font-weight:300;margin-bottom:34px;}
+.news-form{display:flex;justify-content:center;gap:10px;max-width:440px;margin:0 auto;flex-wrap:wrap;}
+.float-field{position:relative;flex:1;min-width:220px;}
+.float-field input{
+  width:100%; padding:16px 18px; border-radius:14px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.14);
+  font-size:14px; outline:none; transition:border-color .3s;
+}
+.float-field input:focus{border-color:var(--blue-soft);}
+.float-field label{
+  position:absolute; left:18px; top:16px; font-size:14px; color:var(--text-faint); pointer-events:none; transition:all .25s var(--ease);
+}
+.float-field input:focus + label, .float-field input.filled + label{
+  top:-9px; left:12px; font-size:10.5px; background:var(--void); padding:0 6px; color:var(--blue-soft); letter-spacing:.05em;
+}
+
+/* ============================= FOOTER ============================= */
+footer{position:relative;z-index:2;padding:80px 24px 30px;border-top:1px solid var(--glass-border);}
+.foot-grid{max-width:1240px;margin:0 auto;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:40px;padding-bottom:50px;}
+@media (max-width:760px){.foot-grid{grid-template-columns:1fr 1fr;}}
+.foot-grid h4{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);margin-bottom:18px;}
+.foot-grid ul li{margin-bottom:11px;}
+.foot-grid ul li a{font-size:13.5px;color:var(--text-dim);transition:color .3s;}
+.foot-grid ul li a:hover{color:#fff;}
+.foot-brand p{color:var(--text-dim);font-size:13.5px;font-weight:300;max-width:280px;margin-top:14px;}
+.foot-social{display:flex;gap:10px;margin-top:20px;}
+.foot-bottom{max-width:1240px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;padding-top:26px;border-top:1px solid var(--glass-border);font-size:12px;color:var(--text-faint);flex-wrap:wrap;gap:14px;}
+
+/* ============================= CART DRAWER ============================= */
+#cartOverlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);z-index:800;opacity:0;pointer-events:none;transition:opacity .5s;}
+#cartOverlay.show{opacity:1;pointer-events:all;}
+#cartDrawer{
+  position:fixed; top:0; right:0; height:100%; width:min(420px,92vw); z-index:801;
+  background:rgba(11,11,18,0.85); backdrop-filter:blur(22px); border-left:1px solid var(--glass-border-strong);
+  transform:translateX(100%); transition:transform .55s var(--ease); display:flex; flex-direction:column;
+}
+#cartDrawer.open{transform:translateX(0);}
+.cart-head{padding:26px 26px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--glass-border);}
+.cart-head h3{font-family:var(--font-display);font-size:20px;}
+.cart-items{flex:1;overflow-y:auto;padding:18px 26px;}
+.cart-item{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid var(--glass-border);align-items:center;}
+.ci-thumb{width:64px;height:64px;border-radius:12px;flex-shrink:0;background:var(--charcoal-2);position:relative;overflow:hidden;}
+.ci-info{flex:1;min-width:0;}
+.ci-info h5{font-size:14px;font-weight:600;margin-bottom:3px;}
+.ci-info span{font-size:12px;color:var(--text-faint);}
+.qty-ctrl{display:flex;align-items:center;gap:10px;margin-top:8px;}
+.qty-ctrl button{width:22px;height:22px;border-radius:6px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);font-size:13px;display:flex;align-items:center;justify-content:center;}
+.qty-ctrl span{font-family:var(--font-mono);font-size:12.5px;min-width:14px;text-align:center;}
+.ci-remove{color:var(--text-faint);font-size:11px;text-decoration:underline;margin-top:6px;display:inline-block;}
+.ci-price{font-family:var(--font-mono);font-size:13.5px;white-space:nowrap;}
+.cart-empty{padding:60px 20px;text-align:center;color:var(--text-dim);font-size:13.5px;}
+.cart-foot{padding:22px 26px 28px;border-top:1px solid var(--glass-border);}
+.subtotal-row{display:flex;justify-content:space-between;margin-bottom:16px;font-size:14px;}
+.subtotal-row b{font-family:var(--font-mono);font-size:17px;}
+.progress-dots{display:flex;gap:6px;margin-bottom:16px;}
+.progress-dots div{flex:1;height:2px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;}
+.progress-dots div span{display:block;height:100%;width:0%;background:var(--grad);transition:width .6s var(--ease);}
+
+/* ============================= QUICK VIEW / CHECKOUT MODALS ============================= */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);z-index:900;opacity:0;pointer-events:none;transition:opacity .45s;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{opacity:1;pointer-events:all;}
+.modal-box{
+  width:min(880px,96vw); max-height:88vh; overflow-y:auto; border-radius:26px; background:rgba(13,13,20,0.92);
+  border:1px solid var(--glass-border-strong); padding:38px; position:relative; transform:scale(.92) translateY(20px); opacity:0; transition:transform .5s var(--ease), opacity .5s var(--ease);
+}
+.modal-overlay.show .modal-box{transform:scale(1) translateY(0);opacity:1;}
+.modal-close{position:absolute;top:20px;right:20px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.1);}
+.qv-grid{display:grid;grid-template-columns:1fr 1fr;gap:40px;}
+@media (max-width:640px){.qv-grid{grid-template-columns:1fr;}}
+.qv-visual{aspect-ratio:1/1;border-radius:18px;background:var(--charcoal-2);position:relative;overflow:hidden;}
+.qv-visual canvas{width:100%!important;height:100%!important;}
+
+/* checkout */
+.co-steps{display:flex;gap:8px;margin-bottom:34px;}
+.co-steps div{flex:1;text-align:center;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);padding-bottom:12px;border-bottom:2px solid rgba(255,255,255,0.08);position:relative;transition:color .4s;}
+.co-steps div.active{color:var(--text);border-color:var(--blue);}
+.co-steps div.done{color:var(--blue-soft);border-color:var(--blue-soft);}
+.co-panel{display:none;}
+.co-panel.active{display:block;animation:fadein .5s var(--ease);}
+@keyframes fadein{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.co-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:10px;}
+.co-fields .full{grid-column:1/-1;}
+.co-card{
+  width:100%;aspect-ratio:1.586/1; max-width:380px; margin:0 auto 30px; border-radius:18px; padding:26px;
+  background:linear-gradient(135deg,#1a1a28,#0c0c16); border:1px solid rgba(255,255,255,0.12); position:relative; overflow:hidden;
+  display:flex;flex-direction:column;justify-content:space-between; font-family:var(--font-mono);
+  transition:transform .3s var(--ease);
+}
+.co-card::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 0%, rgba(91,127,255,0.35), transparent 60%);}
+.co-card .chip{width:38px;height:28px;border-radius:6px;background:linear-gradient(135deg,#d4af37,#f5e28d);position:relative;z-index:1;}
+.co-card .num{font-size:17px;letter-spacing:.12em;position:relative;z-index:1;}
+.co-card .bottom-row{display:flex;justify-content:space-between;font-size:11px;color:#c7c9d9;position:relative;z-index:1;}
+.co-actions{display:flex;justify-content:space-between;margin-top:26px;gap:12px;}
+.celebrate{text-align:center;padding:20px 0;}
+.check-ring{width:84px;height:84px;border-radius:50%;border:2px solid var(--success);display:flex;align-items:center;justify-content:center;margin:0 auto 26px;position:relative;}
+.check-ring svg{width:36px;height:36px;stroke:var(--success);}
+.confetti-piece{position:absolute;width:7px;height:10px;top:0;opacity:0;}
+
+/* ============================= TOASTS ============================= */
+#toastContainer{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;flex-direction:column;gap:10px;align-items:center;}
+.toast{
+  padding:13px 22px;border-radius:999px;background:rgba(15,15,22,0.9);border:1px solid var(--glass-border-strong);
+  backdrop-filter:blur(14px);font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,0.4);
+  transform:translateY(20px);opacity:0;transition:all .5s var(--ease);
+}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast i{width:7px;height:7px;border-radius:50%;background:var(--success);flex-shrink:0;}
+
+/* fly clone */
+.fly-clone{position:fixed;z-index:950;border-radius:14px;pointer-events:none;background:var(--charcoal-2);}
+
+/* reveal utility */
+.reveal{opacity:0;transform:translateY(40px);}
+
+/* search overlay */
+#searchOverlay{position:fixed;inset:0;background:rgba(5,5,9,0.92);backdrop-filter:blur(10px);z-index:850;display:flex;flex-direction:column;align-items:center;padding-top:14vh;opacity:0;pointer-events:none;transition:opacity .4s;}
+#searchOverlay.show{opacity:1;pointer-events:all;}
+.search-box{width:min(600px,90vw);}
+.search-box input{width:100%;background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,0.2);font-family:var(--font-display);font-size:clamp(24px,4vw,38px);padding:14px 4px;outline:none;color:#fff;}
+.search-results{margin-top:24px;display:flex;flex-direction:column;gap:4px;}
+.search-results .sr-item{padding:14px 6px;display:flex;justify-content:space-between;color:var(--text-dim);font-size:14px;border-bottom:1px solid rgba(255,255,255,0.05);}
+.search-results .sr-item:hover{color:#fff;}
+.search-close{position:absolute;top:26px;right:30px;}
+
+::-webkit-scrollbar{width:8px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:8px;}
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+
+<div id="preloader">
+  <div class="pre-mark"><svg viewBox="0 0 64 64"><circle class="ring1" cx="32" cy="32" r="28"/><circle class="ring2" cx="32" cy="32" r="20"/></svg></div>
+  <div class="pre-bar"><span id="preFill"></span></div>
+  <div class="pre-label">Loading experience</div>
+</div>
+
+<!-- NAV -->
+<nav class="navbar" id="navbar">
+  <a href="#" class="nav-logo"><span class="dot"></span>AETHER</a>
+  <div class="nav-links">
+    <a href="#collections">Shop</a>
+    <a href="#spotlight">Collections</a>
+    <a href="#recommended">For You</a>
+    <a href="#footer">Contact</a>
+  </div>
+  <div class="nav-actions">
+    <button class="icon-btn" id="searchBtn" aria-label="Search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg></button>
+    <button class="icon-btn" id="wishBtn" aria-label="Wishlist">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-4.6-9.5-9C.8 8.3 2.6 4 6.7 4c2.1 0 3.8 1.2 5.3 3 1.5-1.8 3.2-3 5.3-3 4.1 0 5.9 4.3 4.2 8-2.5 4.4-9.5 9-9.5 9z"/></svg>
+      <span class="badge" id="wishBadge">0</span>
+    </button>
+    <button class="icon-btn" id="cartBtn" aria-label="Cart">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.5 3h2l2.6 12.4a2 2 0 002 1.6h8.4a2 2 0 002-1.6L21 7H6"/></svg>
+      <span class="badge" id="cartBadge">0</span>
+    </button>
+    <a href="#collections" class="nav-cta mag">Shop Now</a>
+  </div>
+</nav>
+
+<!-- SEARCH -->
+<div id="searchOverlay">
+  <button class="icon-btn search-close" id="searchClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Search the collection..." autocomplete="off">
+    <div class="search-results" id="searchResults"></div>
+  </div>
+</div>
+
+<main>
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-glow glow-a"></div>
+    <div class="hero-glow glow-b"></div>
+    <canvas id="hero-canvas"></canvas>
+    <div class="hero-content">
+      <div class="eyebrow"><span class="line"></span>AETHER — OBJECT COLLECTION 01<span class="line"></span></div>
+      <h1 class="hero-title">
+        <span class="line-wrap"><span class="word">The</span> <span class="word">Future</span></span><br>
+        <span class="line-wrap"><span class="word">of</span> <span class="word grad-text">Shopping.</span></span>
+      </h1>
+      <p class="hero-sub">Precision-engineered objects for a life lived ahead of schedule. Sculpted in the void, finished in light.</p>
+      <div class="hero-ctas">
+        <a href="#collections" class="btn btn-solid mag" data-ripple><span>Shop Now</span></a>
+        <a href="#spotlight" class="btn btn-glass mag" data-ripple><span>Explore Collection</span></a>
+      </div>
+    </div>
+    <div class="scroll-cue"><div class="mouse"><span></span></div><small>SCROLL</small></div>
+  </section>
+
+  <div class="marquee-wrap">
+    <div class="marquee-track" id="marqueeTrack"></div>
+  </div>
+
+  <!-- COLLECTIONS -->
+  <section id="collections">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div><span class="eyebrow-sm">Collection 01</span><h2>Objects, reimagined.</h2></div>
+        <p>Six pieces. Zero compromises. Each one modeled, lit and finished for people who notice details.</p>
+      </div>
+      <div class="grid" id="productGrid"></div>
+    </div>
+  </section>
+
+  <!-- SPOTLIGHT -->
+  <section id="spotlight">
+    <div class="section-inner spotlight">
+      <div class="spot-visual reveal" id="spotVisual">
+        <canvas id="spot-canvas"></canvas>
+        <div class="spot-hint">◐ Drag to rotate</div>
+      </div>
+      <div class="reveal">
+        <span class="eyebrow-sm">Signature Piece</span>
+        <h3 class="spot-title">The Core</h3>
+        <div class="stars">
+          <svg viewBox="0 0 20 20"><path d="M10 1l2.7 6 6.3.6-4.8 4.3 1.4 6.1L10 14.9 4.4 18l1.4-6.1L1 7.6l6.3-.6z"/></svg>
+          <svg viewBox="0 0 20 20"><path d="M10 1l2.7 6 6.3.6-4.8 4.3 1.4 6.1L10 14.9 4.4 18l1.4-6.1L1 7.6l6.3-.6z"/></svg>
+          <svg viewBox="0 0 20 20"><path d="M10 1l2.7 6 6.3.6-4.8 4.3 1.4 6.1L10 14.9 4.4 18l1.4-6.1L1 7.6l6.3-.6z"/></svg>
+          <svg viewBox="0 0 20 20"><path d="M10 1l2.7 6 6.3.6-4.8 4.3 1.4 6.1L10 14.9 4.4 18l1.4-6.1L1 7.6l6.3-.6z"/></svg>
+          <svg viewBox="0 0 20 20"><path d="M10 1l2.7 6 6.3.6-4.8 4.3 1.4 6.1L10 14.9 4.4 18l1.4-6.1L1 7.6l6.3-.6z"/></svg>
+        </div>
+        <div class="review-line">"Feels like the object industrial design has been waiting for." — early access review</div>
+        <p class="spot-desc">A machined aluminum core wrapped in cold-cast glass, holding a slow-breathing light at its center. No screen. No noise. Just presence.</p>
+        <div class="variant-row" id="variantRow"></div>
+        <div class="spec-grid">
+          <div class="spec"><b id="specWeight">142g</b><span>Weight</span></div>
+          <div class="spec"><b>72H</b><span>Glow cycle</span></div>
+          <div class="spec"><b>IP68</b><span>Rated</span></div>
+        </div>
+        <div class="spot-price-row">
+          <span class="spot-price">$680</span>
+          <button class="btn btn-solid mag" id="spotAddBtn" data-ripple><span>Add to Cart</span></button>
+          <button class="icon-btn wish-toggle" data-id="core" aria-label="Wishlist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-4.6-9.5-9C.8 8.3 2.6 4 6.7 4c2.1 0 3.8 1.2 5.3 3 1.5-1.8 3.2-3 5.3-3 4.1 0 5.9 4.3 4.2 8-2.5 4.4-9.5 9-9.5 9z"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECOMMENDED -->
+  <section id="recommended">
+    <div class="section-inner">
+      <div class="section-head reveal">
+        <div><span class="eyebrow-sm">Curated by Aether Intelligence</span><h2>Picked for you.</h2></div>
+        <p>Learned from what you've viewed and saved — refined every visit.</p>
+      </div>
+      <div class="grid" id="recGrid"></div>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <section id="newsletter">
+    <div class="section-inner">
+      <div class="news-panel reveal">
+        <h2>Be first to the next drop.</h2>
+        <p>One email, right before each limited release goes live.</p>
+        <form class="news-form" id="newsForm">
+          <div class="float-field">
+            <input type="email" required id="newsEmail" placeholder=" ">
+            <label>Email address</label>
+          </div>
+          <button type="submit" class="btn btn-solid mag" data-ripple><span>Notify Me</span></button>
+        </form>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer id="footer">
+  <div class="foot-grid">
+    <div class="foot-brand">
+      <a href="#" class="nav-logo"><span class="dot"></span>AETHER</a>
+      <p>Objects designed for people who move faster than trends. Machined in small batches, shipped worldwide.</p>
+      <div class="foot-social">
+        <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg></button>
+        <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M22 5.9c-.7.3-1.5.6-2.3.7.8-.5 1.5-1.3 1.8-2.3-.8.5-1.6.8-2.5 1a4 4 0 00-6.9 3.6A11.4 11.4 0 013 4.9a4 4 0 001.2 5.3c-.6 0-1.2-.2-1.7-.5v.1a4 4 0 003.2 3.9c-.6.2-1.2.2-1.7.1a4 4 0 003.7 2.8A8 8 0 012 18.6a11.3 11.3 0 006.1 1.8c7.4 0 11.4-6.1 11.4-11.4v-.5c.8-.6 1.4-1.3 1.9-2.1z"/></svg></button>
+        <button class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-4 0v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></button>
+      </div>
+    </div>
+    <div><h4>Shop</h4><ul><li><a href="#collections">All Objects</a></li><li><a href="#spotlight">The Core</a></li><li><a href="#recommended">New Arrivals</a></li><li><a href="#">Gift Cards</a></li></ul></div>
+    <div><h4>Company</h4><ul><li><a href="#">About</a></li><li><a href="#">Careers</a></li><li><a href="#">Press</a></li><li><a href="#">Sustainability</a></li></ul></div>
+    <div><h4>Support</h4><ul><li><a href="#">FAQ</a></li><li><a href="#">Shipping</a></li><li><a href="#">Returns</a></li><li><a href="#">Contact</a></li></ul></div>
+  </div>
+  <div class="foot-bottom">
+    <span>© 2026 AETHER Objects, Inc.</span>
+    <span>Designed &amp; built for a $1M feel.</span>
+  </div>
+</footer>
+
+<!-- CART -->
+<div id="cartOverlay"></div>
+<aside id="cartDrawer">
+  <div class="cart-head"><h3>Your Cart</h3><button class="icon-btn" id="cartClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
+  <div class="cart-items" id="cartItems"></div>
+  <div class="cart-foot">
+    <div class="progress-dots"><div><span id="progFree"></span></div><div><span></span></div><div><span></span></div></div>
+    <div class="subtotal-row"><span>Subtotal</span><b id="cartSubtotal">$0</b></div>
+    <button class="btn btn-solid mag" id="checkoutBtn" style="width:100%;justify-content:center;" data-ripple><span>Proceed to Checkout</span></button>
+  </div>
+</aside>
+
+<!-- QUICK VIEW -->
+<div class="modal-overlay" id="qvOverlay">
+  <div class="modal-box">
+    <button class="modal-close" id="qvClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <div class="qv-grid">
+      <div class="qv-visual"><canvas id="qv-canvas"></canvas></div>
+      <div>
+        <span class="eyebrow-sm" id="qvTag">Object</span>
+        <h3 class="spot-title" id="qvTitle" style="font-size:28px;">—</h3>
+        <p class="spot-desc" id="qvDesc"></p>
+        <div class="spot-price-row">
+          <span class="spot-price" id="qvPrice">$0</span>
+          <button class="btn btn-solid mag" id="qvAddBtn" data-ripple><span>Add to Cart</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CHECKOUT -->
+<div class="modal-overlay" id="coOverlay">
+  <div class="modal-box" style="max-width:560px;">
+    <button class="modal-close" id="coClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    <div class="co-steps">
+      <div class="active" data-step="1">01 · Shipping</div>
+      <div data-step="2">02 · Payment</div>
+      <div data-step="3">03 · Confirm</div>
+    </div>
+
+    <div class="co-panel active" data-panel="1">
+      <div class="co-fields">
+        <div class="float-field full"><input placeholder=" "><label>Full name</label></div>
+        <div class="float-field full"><input placeholder=" "><label>Address</label></div>
+        <div class="float-field"><input placeholder=" "><label>City</label></div>
+        <div class="float-field"><input placeholder=" "><label>Postal code</label></div>
+      </div>
+      <div class="co-actions"><span></span><button class="btn btn-solid mag co-next" data-ripple><span>Continue</span></button></div>
+    </div>
+
+    <div class="co-panel" data-panel="2">
+      <div class="co-card" id="coCard">
+        <div class="chip"></div>
+        <div class="num" id="coCardNum">•••• •••• •••• ••••</div>
+        <div class="bottom-row"><span id="coCardName">CARDHOLDER NAME</span><span id="coCardExp">MM/YY</span></div>
+      </div>
+      <div class="co-fields">
+        <div class="float-field full"><input placeholder=" " id="ccNum" maxlength="19"><label>Card number</label></div>
+        <div class="float-field full"><input placeholder=" " id="ccName"><label>Name on card</label></div>
+        <div class="float-field"><input placeholder=" " id="ccExp" maxlength="5"><label>Expiry (MM/YY)</label></div>
+        <div class="float-field"><input placeholder=" " maxlength="3"><label>CVC</label></div>
+      </div>
+      <div class="co-actions"><button class="btn btn-outline mag co-back" data-ripple><span>Back</span></button><button class="btn btn-solid mag co-next" data-ripple><span>Pay Now</span></button></div>
+    </div>
+
+    <div class="co-panel" data-panel="3">
+      <div class="celebrate">
+        <div class="check-ring" id="checkRing"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+        <h3 class="spot-title" style="font-size:24px;">Order confirmed</h3>
+        <p class="spot-desc" style="margin:10px auto 0;">Your objects are being prepared for shipment. A confirmation just landed in your inbox.</p>
+        <button class="btn btn-glass mag" id="coDone" style="margin-top:26px;" data-ripple><span>Done</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+gsap.registerPlugin(ScrollTrigger);
+
+/* ============================= DATA ============================= */
+const PRODUCTS = [
+  {id:'p1', tag:'Audio', name:'Pulse Earbuds', desc:'Spatial sound, sealed in liquid glass.', price:340, color:0x5b7fff, geo:'torusKnot'},
+  {id:'p2', tag:'Wearable', name:'Halo Ring', desc:'Biometric signal in a single band.', price:520, color:0xb24bff, geo:'torus'},
+  {id:'p3', tag:'Audio', name:'Wave Headset', desc:'Active silence, tuned by hand.', price:610, color:0x5b7fff, geo:'icosahedron'},
+  {id:'p4', tag:'Power', name:'Flux Charger', desc:'Wireless power, zero heat.', price:190, color:0xb24bff, geo:'octahedron'},
+  {id:'p5', tag:'Wearable', name:'Aether Watch', desc:'Time, distilled to essentials.', price:780, color:0x5b7fff, geo:'cylinder'},
+  {id:'p6', tag:'Audio', name:'Nova Speaker', desc:'Room-filling sound, palm-sized.', price:450, color:0xb24bff, geo:'sphere'},
+];
+const REC = [PRODUCTS[2], PRODUCTS[4], PRODUCTS[0]];
+let cart = [];
+let wishlist = new Set();
+let recentlyViewed = [];
+
+/* ============================= PRELOADER ============================= */
+window.addEventListener('load', ()=>{
+  gsap.to('#preFill', {width:'100%', duration:1.3, ease:'power2.inOut'});
+  setTimeout(()=>{
+    document.getElementById('preloader').classList.add('done');
+    playHeroIntro();
+  }, 1500);
+});
+
+/* ============================= CUSTOM CURSOR ============================= */
+const cDot = document.querySelector('.cursor-dot');
+const cRing = document.querySelector('.cursor-ring');
+let mx=innerWidth/2,my=innerHeight/2, rx=mx, ry=my;
+window.addEventListener('mousemove', e=>{ mx=e.clientX; my=e.clientY; cDot.style.left=mx+'px'; cDot.style.top=my+'px'; });
+(function loop(){ rx+=(mx-rx)*0.18; ry+=(my-ry)*0.18; cRing.style.left=rx+'px'; cRing.style.top=ry+'px'; requestAnimationFrame(loop); })();
+document.addEventListener('mousedown', ()=>cRing.classList.add('click'));
+document.addEventListener('mouseup', ()=>cRing.classList.remove('click'));
+document.querySelectorAll('a,button,.card,input').forEach(el=>{
+  el.addEventListener('mouseenter', ()=>cRing.classList.add('hover'));
+  el.addEventListener('mouseleave', ()=>cRing.classList.remove('hover'));
+});
+
+/* magnetic buttons */
+document.querySelectorAll('.mag').forEach(btn=>{
+  btn.addEventListener('mousemove', e=>{
+    const r = btn.getBoundingClientRect();
+    const relX = e.clientX - r.left - r.width/2;
+    const relY = e.clientY - r.top - r.height/2;
+    gsap.to(btn, {x:relX*0.3, y:relY*0.4, duration:0.4, ease:'power3.out'});
+  });
+  btn.addEventListener('mouseleave', ()=>gsap.to(btn, {x:0,y:0,duration:0.5,ease:'elastic.out(1,0.4)'}));
+});
+
+/* ripple */
+document.querySelectorAll('[data-ripple]').forEach(btn=>{
+  btn.addEventListener('click', function(e){
+    const r=this.getBoundingClientRect();
+    const s=document.createElement('span');
+    s.className='ripple';
+    s.style.left=(e.clientX-r.left)+'px'; s.style.top=(e.clientY-r.top)+'px';
+    this.appendChild(s); setTimeout(()=>s.remove(),700);
+  });
+});
+
+/* ============================= NAV SCROLL ============================= */
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', ()=> navbar.classList.toggle('scrolled', window.scrollY>40));
+
+/* ============================= MARQUEE ============================= */
+const words = ['PRECISION ENGINEERED','LIMITED RELEASE','DESIGNED IN THE VOID','SHIPPED WORLDWIDE','CRAFTED NOT ASSEMBLED'];
+document.getElementById('marqueeTrack').innerHTML = (words.concat(words)).map(w=>`<span>${w}<i></i></span>`).join('');
+
+/* ============================= HERO TEXT INTRO ============================= */
+function playHeroIntro(){
+  const tl = gsap.timeline({defaults:{ease:'power4.out'}});
+  tl.to('.eyebrow', {opacity:1, duration:.8})
+    .to('.hero-title .word', {y:'0%', duration:1.1, stagger:0.08}, '-=0.4')
+    .to('.hero-sub', {opacity:1, y:0, duration:.9}, '-=0.6')
+    .to('.hero-ctas', {opacity:1, y:0, duration:.9}, '-=0.7')
+    .to('.scroll-cue', {opacity:1, duration:.8}, '-=0.5');
+}
+
+/* ============================= THREE.JS HERO SCENE ============================= */
+function initHeroScene(){
+  const canvas = document.getElementById('hero-canvas');
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 100);
+  camera.position.set(0,0,7);
+
+  // core
+  const coreGroup = new THREE.Group();
+  const icoGeo = new THREE.IcosahedronGeometry(1.5, 1);
+  const icoMat = new THREE.MeshBasicMaterial({color:0x8ea2ff, wireframe:true, transparent:true, opacity:0.55});
+  const ico = new THREE.Mesh(icoGeo, icoMat);
+  coreGroup.add(ico);
+  const innerMat = new THREE.MeshBasicMaterial({color:0xb24bff, transparent:true, opacity:0.25});
+  const inner = new THREE.Mesh(new THREE.SphereGeometry(0.9,32,32), innerMat);
+  coreGroup.add(inner);
+  const coreLight = new THREE.PointLight(0x8ea2ff, 3, 10);
+  coreGroup.add(coreLight);
+  scene.add(coreGroup);
+
+  // particles
+  const pCount = 1400;
+  const pGeo = new THREE.BufferGeometry();
+  const positions = new Float32Array(pCount*3);
+  for(let i=0;i<pCount;i++){
+    positions[i*3]=(Math.random()-0.5)*18;
+    positions[i*3+1]=(Math.random()-0.5)*11;
+    positions[i*3+2]=(Math.random()-0.5)*14;
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+  const pMat = new THREE.PointsMaterial({color:0x9db1ff, size:0.02, transparent:true, opacity:0.7});
+  const particles = new THREE.Points(pGeo, pMat);
+  scene.add(particles);
+
+  function resize(){
+    const w = canvas.parentElement.clientWidth, h = canvas.parentElement.clientHeight;
+    renderer.setSize(w,h,false);
+    camera.aspect = w/h; camera.updateProjectionMatrix();
+  }
+  resize(); window.addEventListener('resize', resize);
+
+  let tx=0, ty=0;
+  window.addEventListener('mousemove', e=>{
+    tx = (e.clientX/innerWidth - 0.5);
+    ty = (e.clientY/innerHeight - 0.5);
+  });
+
+  let t=0;
+  function animate(){
+    t+=0.01;
+    coreGroup.rotation.y += 0.0025;
+    coreGroup.rotation.x = Math.sin(t*0.3)*0.15;
+    particles.rotation.y += 0.0006;
+    camera.position.x += (tx*2 - camera.position.x)*0.03;
+    camera.position.y += (-ty*1.4 - camera.position.y)*0.03;
+    camera.lookAt(0,0,0);
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  // fade core on scroll
+  ScrollTrigger.create({
+    trigger:'#hero', start:'top top', end:'bottom top', scrub:true,
+    onUpdate: self => { coreGroup.scale.setScalar(1 - self.progress*0.4); scene.position.z = self.progress*2; }
+  });
+}
+initHeroScene();
+
+/* ============================= MINI 3D FACTORY (cards / spotlight / quickview) ============================= */
+function makeMiniScene(canvas, colorHex, geoType){
+  const renderer = new THREE.WebGLRenderer({canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 50);
+  camera.position.set(0,0,4);
+  const light = new THREE.PointLight(0xffffff, 2, 20); light.position.set(3,3,4); scene.add(light);
+  const light2 = new THREE.PointLight(colorHex, 3, 20); light2.position.set(-3,-2,3); scene.add(light2);
+  scene.add(new THREE.AmbientLight(0x404050, 1.4));
+
+  let geo;
+  switch(geoType){
+    case 'torusKnot': geo = new THREE.TorusKnotGeometry(0.7,0.22,120,16); break;
+    case 'torus': geo = new THREE.TorusGeometry(0.85,0.28,24,80); break;
+    case 'icosahedron': geo = new THREE.IcosahedronGeometry(1.05,0); break;
+    case 'octahedron': geo = new THREE.OctahedronGeometry(1.15,0); break;
+    case 'cylinder': geo = new THREE.CylinderGeometry(0.55,0.7,1.3,48); break;
+    case 'sphere': geo = new THREE.SphereGeometry(1.05,48,48); break;
+    default: geo = new THREE.IcosahedronGeometry(1,0);
+  }
+  const mat = new THREE.MeshStandardMaterial({color:colorHex, metalness:0.7, roughness:0.22, wireframe:false});
+  const mesh = new THREE.Mesh(geo, mat);
+  scene.add(mesh);
+
+  function resize(){
+    const s = canvas.parentElement.clientWidth;
+    const h = canvas.parentElement.clientHeight;
+    renderer.setSize(s,h,false); camera.aspect=s/h; camera.updateProjectionMatrix();
+  }
+  resize();
+  const ro = new ResizeObserver(resize); ro.observe(canvas.parentElement);
+
+  let hover=false, dragging=false, dragX=0, rotY=0, autorotate=true;
+  canvas.parentElement.addEventListener('mouseenter', ()=>hover=true);
+  canvas.parentElement.addEventListener('mouseleave', ()=>hover=false);
+  canvas.parentElement.addEventListener('pointerdown', e=>{dragging=true; dragX=e.clientX; autorotate=false;});
+  window.addEventListener('pointerup', ()=>dragging=false);
+  window.addEventListener('pointermove', e=>{
+    if(dragging){ rotY += (e.clientX-dragX)*0.008; dragX=e.clientX; }
+  });
+
+  function animate(){
+    if(autorotate || hover) mesh.rotation.y += 0.01;
+    else mesh.rotation.y = rotY;
+    mesh.rotation.x += 0.002;
+    if(hover) mesh.scale.setScalar(THREE.MathUtils.lerp(mesh.scale.x,1.08,0.08));
+    else mesh.scale.setScalar(THREE.MathUtils.lerp(mesh.scale.x,1,0.08));
+    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
+  }
+  animate();
+  return {mesh, mat};
+}
+
+/* ============================= BUILD PRODUCT CARDS ============================= */
+const grid = document.getElementById('productGrid');
+PRODUCTS.forEach(p=>{
+  const card = document.createElement('div');
+  card.className='card reveal';
+  card.innerHTML = `
+    <div class="card-inner" data-tilt>
+      <div class="card-glow"></div>
+      <div class="card-visual">
+        <span class="card-tag">${p.tag}</span>
+        <button class="wish-btn" data-id="${p.id}"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-4.6-9.5-9C.8 8.3 2.6 4 6.7 4c2.1 0 3.8 1.2 5.3 3 1.5-1.8 3.2-3 5.3-3 4.1 0 5.9 4.3 4.2 8-2.5 4.4-9.5 9-9.5 9z"/></svg></button>
+        <canvas></canvas>
+      </div>
+      <h3 class="card-title">${p.name}</h3>
+      <p class="card-desc">${p.desc}</p>
+      <div class="card-foot">
+        <span class="card-price">$${p.price} <small>USD</small></span>
+        <button class="qv-btn" data-id="${p.id}">Quick View</button>
+      </div>
+    </div>`;
+  grid.appendChild(card);
+  makeMiniScene(card.querySelector('canvas'), p.color, p.geo);
+});
+
+const recGrid = document.getElementById('recGrid');
+REC.forEach(p=>{
+  const card = document.createElement('div');
+  card.className='card reveal';
+  card.innerHTML = `
+    <div class="card-inner" data-tilt>
+      <div class="card-glow"></div>
+      <div class="card-visual">
+        <span class="card-tag">${p.tag}</span>
+        <button class="wish-btn" data-id="${p.id}"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-4.6-9.5-9C.8 8.3 2.6 4 6.7 4c2.1 0 3.8 1.2 5.3 3 1.5-1.8 3.2-3 5.3-3 4.1 0 5.9 4.3 4.2 8-2.5 4.4-9.5 9-9.5 9z"/></svg></button>
+        <canvas></canvas>
+      </div>
+      <h3 class="card-title">${p.name}</h3>
+      <p class="card-desc">${p.desc}</p>
+      <div class="card-foot">
+        <span class="card-price">$${p.price} <small>USD</small></span>
+        <button class="qv-btn" data-id="${p.id}">Quick View</button>
+      </div>
+    </div>`;
+  recGrid.appendChild(card);
+  makeMiniScene(card.querySelector('canvas'), p.color, p.geo);
+});
+
+/* tilt effect for all cards */
+document.querySelectorAll('[data-tilt]').forEach(card=>{
+  card.addEventListener('mousemove', e=>{
+    const r = card.getBoundingClientRect();
+    const px = (e.clientX-r.left)/r.width, py=(e.clientY-r.top)/r.height;
+    const rx = (py-0.5)*-12, ry=(px-0.5)*14;
+    card.style.transform = `rotateX(${rx}deg) rotateY(${ry}deg) translateZ(0)`;
+    card.style.setProperty('--mx', (px*100)+'%'); card.style.setProperty('--my', (py*100)+'%');
+  });
+  card.addEventListener('mouseleave', ()=>{ card.style.transform='rotateX(0) rotateY(0)'; });
+});
+
+/* ============================= SPOTLIGHT SCENE + VARIANTS ============================= */
+const spotColors = [{hex:0x5b7fff,name:'Ion Blue',w:'142g'},{hex:0xb24bff,name:'Nova Violet',w:'146g'},{hex:0xe8e8ef,name:'Lunar White',w:'139g'}];
+const spot = makeMiniScene(document.getElementById('spot-canvas'), spotColors[0].hex, 'icosahedron');
+const variantRow = document.getElementById('variantRow');
+spotColors.forEach((c,i)=>{
+  const b = document.createElement('button');
+  b.className='variant'+(i===0?' active':'');
+  b.style.background = '#'+c.hex.toString(16).padStart(6,'0');
+  b.addEventListener('click', ()=>{
+    variantRow.querySelectorAll('.variant').forEach(v=>v.classList.remove('active'));
+    b.classList.add('active');
+    spot.mat.color.setHex(c.hex);
+    document.getElementById('specWeight').textContent = c.w;
+  });
+  variantRow.appendChild(b);
+});
+
+/* ============================= QUICK VIEW ============================= */
+const qvOverlay = document.getElementById('qvOverlay');
+let qvScene=null, currentQvProduct=null;
+function openQuickView(p){
+  currentQvProduct = p;
+  document.getElementById('qvTag').textContent = p.tag;
+  document.getElementById('qvTitle').textContent = p.name;
+  document.getElementById('qvDesc').textContent = p.desc + ' Machined aluminum shell, hand-finished, individually numbered.';
+  document.getElementById('qvPrice').textContent = '$'+p.price;
+  qvOverlay.classList.add('show');
+  recentlyViewed = [p.id, ...recentlyViewed.filter(id=>id!==p.id)].slice(0,4);
+  if(!qvScene){ qvScene = makeMiniScene(document.getElementById('qv-canvas'), p.color, p.geo); }
+  else { qvScene.mat.color.setHex(p.color); }
+}
+document.querySelectorAll('.qv-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=> openQuickView(PRODUCTS.find(p=>p.id===btn.dataset.id)) );
+});
+document.getElementById('qvClose').addEventListener('click', ()=>qvOverlay.classList.remove('show'));
+qvOverlay.addEventListener('click', e=>{ if(e.target===qvOverlay) qvOverlay.classList.remove('show'); });
+document.getElementById('qvAddBtn').addEventListener('click', (e)=>{
+  addToCart(currentQvProduct, e.currentTarget);
+  qvOverlay.classList.remove('show');
+});
+
+/* ============================= WISHLIST ============================= */
+function toggleWish(id, btn){
+  if(wishlist.has(id)){ wishlist.delete(id); btn.classList.remove('active'); }
+  else{ wishlist.add(id); btn.classList.add('active'); showToast('Saved to wishlist'); }
+  const badge = document.getElementById('wishBadge');
+  badge.textContent = wishlist.size;
+  badge.classList.toggle('show', wishlist.size>0);
+}
+document.addEventListener('click', e=>{
+  const btn = e.target.closest('.wish-btn, .wish-toggle');
+  if(btn) toggleWish(btn.dataset.id, btn);
+});
+
+/* ============================= CART LOGIC ============================= */
+const cartDrawer = document.getElementById('cartDrawer');
+const cartOverlay = document.getElementById('cartOverlay');
+function openCart(){ cartDrawer.classList.add('open'); cartOverlay.classList.add('show'); }
+function closeCart(){ cartDrawer.classList.remove('open'); cartOverlay.classList.remove('show'); }
+document.getElementById('cartBtn').addEventListener('click', openCart);
+document.getElementById('cartClose').addEventListener('click', closeCart);
+cartOverlay.addEventListener('click', closeCart);
+
+function addToCart(p, sourceEl){
+  flyToCart(sourceEl);
+  const existing = cart.find(i=>i.id===p.id);
+  if(existing) existing.qty++;
+  else cart.push({...p, qty:1});
+  renderCart();
+  showToast(`${p.name} added to cart`);
+  setTimeout(openCart, 550);
+}
+document.getElementById('spotAddBtn').addEventListener('click', (e)=>{
+  addToCart({id:'core', tag:'Signature', name:'The Core', desc:'Signature piece.', price:680, color:0x8ea2ff, geo:'icosahedron'}, e.currentTarget);
+});
+document.addEventListener('click', e=>{
+  const btn = e.target.closest('.card .qv-btn');
+});
+
+function renderCart(){
+  const container = document.getElementById('cartItems');
+  const badge = document.getElementById('cartBadge');
+  const totalQty = cart.reduce((s,i)=>s+i.qty,0);
+  badge.textContent = totalQty; badge.classList.toggle('show', totalQty>0);
+  if(cart.length===0){ container.innerHTML = '<div class="cart-empty">Your cart is empty.<br>Find something you love.</div>'; }
+  else{
+    container.innerHTML = cart.map(i=>`
+      <div class="cart-item" data-id="${i.id}">
+        <div class="ci-thumb"></div>
+        <div class="ci-info">
+          <h5>${i.name}</h5><span>$${i.price}</span>
+          <div class="qty-ctrl">
+            <button class="q-dec">−</button><span>${i.qty}</span><button class="q-inc">+</button>
+          </div>
+          <a class="ci-remove">Remove</a>
+        </div>
+        <div class="ci-price">$${i.price*i.qty}</div>
+      </div>`).join('');
+    cart.forEach(i=>{
+      // render tiny canvas scene per thumb
+    });
+  }
+  const subtotal = cart.reduce((s,i)=>s+i.price*i.qty,0);
+  document.getElementById('cartSubtotal').textContent = '$'+subtotal;
+  document.getElementById('progFree').style.width = Math.min(100,(subtotal/500)*100)+'%';
+}
+document.getElementById('cartItems').addEventListener('click', e=>{
+  const row = e.target.closest('.cart-item'); if(!row) return;
+  const id = row.dataset.id; const item = cart.find(i=>i.id===id);
+  if(e.target.classList.contains('q-inc')){ item.qty++; renderCart(); }
+  if(e.target.classList.contains('q-dec')){ item.qty--; if(item.qty<=0) cart = cart.filter(i=>i.id!==id); renderCart(); }
+  if(e.target.classList.contains('ci-remove')){ cart = cart.filter(i=>i.id!==id); renderCart(); showToast('Item removed'); }
+});
+renderCart();
+
+function flyToCart(sourceEl){
+  if(!sourceEl) return;
+  const cartBtn = document.getElementById('cartBtn');
+  const startRect = sourceEl.getBoundingClientRect();
+  const endRect = cartBtn.getBoundingClientRect();
+  const clone = document.createElement('div');
+  clone.className='fly-clone';
+  clone.style.left = startRect.left+'px'; clone.style.top=startRect.top+'px';
+  clone.style.width = '46px'; clone.style.height='46px';
+  clone.style.background = 'linear-gradient(135deg,var(--blue),var(--purple))';
+  document.body.appendChild(clone);
+  gsap.to(clone, {
+    left:endRect.left+10, top:endRect.top+10, width:14, height:14, opacity:0.4, borderRadius:'50%',
+    duration:0.75, ease:'power2.in',
+    onComplete:()=>{ clone.remove(); gsap.fromTo(cartBtn,{scale:1},{scale:1.25,duration:0.15,yoyo:true,repeat:1}); }
+  });
+}
+
+/* ============================= TOASTS ============================= */
+function showToast(msg){
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className='toast'; t.innerHTML = `<i></i>${msg}`;
+  c.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add('show'));
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),500); }, 2800);
+}
+
+/* ============================= NEWSLETTER ============================= */
+document.querySelectorAll('.float-field input').forEach(inp=>{
+  inp.addEventListener('input', ()=>inp.classList.toggle('filled', inp.value.length>0));
+});
+document.getElementById('newsForm').addEventListener('submit', e=>{
+  e.preventDefault(); showToast("You're on the list ✦");
+  document.getElementById('newsEmail').value='';
+});
+
+/* ============================= SEARCH ============================= */
+const searchOverlay = document.getElementById('searchOverlay');
+document.getElementById('searchBtn').addEventListener('click', ()=>{ searchOverlay.classList.add('show'); document.getElementById('searchInput').focus(); });
+document.getElementById('searchClose').addEventListener('click', ()=>searchOverlay.classList.remove('show'));
+document.getElementById('searchInput').addEventListener('input', e=>{
+  const q = e.target.value.toLowerCase();
+  const res = document.getElementById('searchResults');
+  if(!q){ res.innerHTML=''; return; }
+  const matches = PRODUCTS.filter(p=>p.name.toLowerCase().includes(q) || p.tag.toLowerCase().includes(q));
+  res.innerHTML = matches.map(p=>`<div class="sr-item" data-id="${p.id}"><span>${p.name}</span><span>$${p.price}</span></div>`).join('') || '<div class="sr-item"><span>No matches</span></div>';
+});
+document.getElementById('searchResults').addEventListener('click', e=>{
+  const row = e.target.closest('.sr-item'); if(!row || !row.dataset.id) return;
+  searchOverlay.classList.remove('show');
+  openQuickView(PRODUCTS.find(p=>p.id===row.dataset.id));
+});
+
+/* ============================= CHECKOUT FLOW ============================= */
+const coOverlay = document.getElementById('coOverlay');
+document.getElementById('checkoutBtn').addEventListener('click', ()=>{
+  if(cart.length===0){ showToast('Your cart is empty'); return; }
+  closeCart(); coOverlay.classList.add('show'); goToStep(1);
+});
+document.getElementById('coClose').addEventListener('click', ()=>coOverlay.classList.remove('show'));
+document.getElementById('coDone').addEventListener('click', ()=>{
+  coOverlay.classList.remove('show'); cart=[]; renderCart();
+});
+
+function goToStep(n){
+  document.querySelectorAll('.co-steps div').forEach(d=>{
+    const s = +d.dataset.step;
+    d.classList.toggle('active', s===n);
+    d.classList.toggle('done', s<n);
+  });
+  document.querySelectorAll('.co-panel').forEach(p=> p.classList.toggle('active', +p.dataset.panel===n) );
+  if(n===3) celebrate();
+}
+document.querySelectorAll('.co-next').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const current = +document.querySelector('.co-panel.active').dataset.panel;
+    goToStep(current+1);
+  });
+});
+document.querySelectorAll('.co-back').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const current = +document.querySelector('.co-panel.active').dataset.panel;
+    goToStep(current-1);
+  });
+});
+
+/* live card preview */
+const ccNum = document.getElementById('ccNum'), ccName=document.getElementById('ccName'), ccExp=document.getElementById('ccExp');
+ccNum.addEventListener('input', ()=>{
+  let v = ccNum.value.replace(/\D/g,'').slice(0,16).replace(/(.{4})/g,'$1 ').trim();
+  ccNum.value = v;
+  document.getElementById('coCardNum').textContent = (v || '•••• •••• •••• ••••').padEnd(19,'').toString();
+});
+ccName.addEventListener('input', ()=>{ document.getElementById('coCardName').textContent = ccName.value.toUpperCase() || 'CARDHOLDER NAME'; });
+ccExp.addEventListener('input', ()=>{
+  let v = ccExp.value.replace(/\D/g,'').slice(0,4);
+  if(v.length>2) v = v.slice(0,2)+'/'+v.slice(2);
+  ccExp.value=v;
+  document.getElementById('coCardExp').textContent = v || 'MM/YY';
+});
+document.querySelectorAll('#ccNum,#ccName,#ccExp').forEach(inp=>{
+  inp.addEventListener('focus', ()=>gsap.to('#coCard',{rotateY:8,duration:.4}));
+  inp.addEventListener('blur', ()=>gsap.to('#coCard',{rotateY:0,duration:.4}));
+});
+
+function celebrate(){
+  const ring = document.getElementById('checkRing');
+  gsap.fromTo(ring, {scale:0.5, opacity:0}, {scale:1, opacity:1, duration:.6, ease:'back.out(2)'});
+  for(let i=0;i<26;i++){
+    const p = document.createElement('div');
+    p.className='confetti-piece';
+    p.style.left = (45 + Math.random()*10)+'%';
+    p.style.background = Math.random()>0.5 ? '#5b7fff' : '#b24bff';
+    p.style.transform = `rotate(${Math.random()*360}deg)`;
+    document.querySelector('.celebrate').appendChild(p);
+    gsap.to(p, {
+      y: 220+Math.random()*80, x:(Math.random()-0.5)*260, rotate:Math.random()*720, opacity:1,
+      duration:1.2+Math.random(), ease:'power1.out',
+      onStart:()=>gsap.set(p,{opacity:1}),
+      onComplete:()=>p.remove()
+    });
+  }
+}
+
+/* ============================= SCROLL REVEALS ============================= */
+document.querySelectorAll('.reveal').forEach(el=>{
+  gsap.to(el, {
+    opacity:1, y:0, duration:1, ease:'power3.out',
+    scrollTrigger:{trigger:el, start:'top 85%'}
+  });
+});
+gsap.utils.toArray('.card').forEach((el,i)=>{
+  gsap.fromTo(el, {opacity:0, y:60, rotateX:8}, {
+    opacity:1, y: el.classList.contains('reveal')?0:undefined, rotateX:0, duration:0.9, delay:(i%3)*0.08, ease:'power3.out',
+    scrollTrigger:{trigger:el, start:'top 90%'}
+  });
+});
+</script>
+</body>
+</html>
